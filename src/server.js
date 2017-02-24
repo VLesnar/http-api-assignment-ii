@@ -32,12 +32,39 @@ const handlePost = (request, response, parsedUrl) => {
 };
 
 const handleGet = (request, response, parsedUrl) => {
-  if (parsedUrl.pathname === 'style.css') {
-    htmlHandler.getStyle(request, response);
-  } else if (parsedUrl.pathname === '/getUsers') {
-    jsonHandler.getUsers(request, response);
-  } else {
-    htmlHandler.getIndex(request, response);
+  switch (parsedUrl.pathname) {
+    case '/':
+      htmlHandler.getIndex(request, response);
+      break;
+    case '/style.css':
+      htmlHandler.getStyle(request, response);
+      break;
+    case '/getUsers':
+      jsonHandler.getUsers(request, response);
+      break;
+    case '/updateUser':
+      jsonHandler.updateUser(request, response);
+      break;
+    case '/notReal':
+      jsonHandler.notFound(request, response);
+      break;
+    default:
+      jsonHandler.notFound(request, response);
+      break;
+  }
+};
+
+const handleHead = (request, response, parsedUrl) => {
+  switch (parsedUrl.pathname) {
+    case '/getUsers':
+      jsonHandler.getUsersMeta(request, response);
+      break;
+    case '/notReal':
+      jsonHandler.notFoundMeta(request, response);
+      break;
+    default:
+      jsonHandler.notFoundMeta(request, response);
+      break;
   }
 };
 
@@ -46,6 +73,8 @@ const onRequest = (request, response) => {
 
   if (request.method === 'POST') {
     handlePost(request, response, parsedUrl);
+  } else if (request.method === 'HEAD') {
+    handleHead(request, response, parsedUrl);
   } else {
     handleGet(request, response, parsedUrl);
   }

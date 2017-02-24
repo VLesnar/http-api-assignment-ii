@@ -6,27 +6,27 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
-    const parseJSON = (xhr, content) => {
-      const obj = JSON.parse(xhr.response);
-      console.dir(obj);
-      
-      if(obj.message) {
+    const parseJSON = (xhr, content, parseResponse) => {        
+      if(parseResponse) {
+        const obj = JSON.parse(xhr.response);
         const p = document.createElement('p');
-        p.textContent = `Message: ${obj.message}`;
-        content.appendChild(p);
-      }
-      
-      if(obj.users) {
-        const userList = document.createElement('p');
-        const users = JSON.stringify(obj.users);
-        userList.textContent = users;
-        content.appendChild(userList);
-      }
+        console.dir(obj);
+        if(obj.message) {
+          p.textContent = `Message: ${obj.message}`;
+          content.appendChild(p);
+        }
+        
+        if(obj.users) {
+          const userList = document.createElement('p');
+          const users = JSON.stringify(obj.users);
+          userList.textContent = users;
+          content.appendChild(userList);
+        }
+      }     
     };
 
     const handleResponse = (xhr, parseResponse) => {
       const content = document.querySelector('#content');
-      console.log(xhr.getResponseHeader('etag'));
       console.log(xhr.status);
       
       switch(xhr.status) {
@@ -38,9 +38,11 @@
           break;
         case 204:
           content.innerHTML = `<b>Updated (No Content)</b>`;
+          parseResponse = false;
           break;
         case 304:
           content.innerHTML = `<b>Not Modified</b>`;
+          parseResponse = false;
           break;
         case 400:
           content.innerHTML = `<b>Bad Request</b>`;
@@ -53,23 +55,28 @@
           break;
       }
       
-      parseJSON(xhr, content);
+      parseJSON(xhr, content, parseResponse);
     };
 
     const requestUpdate = (e, form) => {
-      const action = form.getAttribute('action');
-      const method = form.getAttribute('method');
+      let action = form.getAttribute('action');
+      let method = form.getAttribute('method');
       
       const xhr = new XMLHttpRequest();
+      
+      if (form.id === 'userForm') {
+        method = form.querySelector('#methodSelect').value;
+        action = form.querySelector('#urlField').value;
+      }
       
       xhr.open(method, action);
       
       xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
       xhr.setRequestHeader('Accept', 'applcation/json');
       
-      if(method == 'get') {
+      if(method == 'get' || method == 'post') {
         xhr.onload = () => handleResponse(xhr, true);
-      } else {
+      } else if (method == 'head') {
         xhr.onload = () => handleResponse(xhr, false);
       }
       
@@ -94,8 +101,6 @@
     const init = () => {
       const userForm = document.querySelector('#userForm');
       const nameForm = document.querySelector('#nameForm');
-      
-      console.log(userForm.id);
       
       const getUsers = (e) => requestUpdate(e, userForm);
       const addUser = (e) => requestUpdate(e, nameForm);
